@@ -60,6 +60,7 @@ def get_ydl_opts_mp3(output_path):
     return {
         "format": "bestaudio/best",
         "outtmpl": output_path,
+        "proxy": os.getenv("HTTP_PROXY", ""),
         "postprocessors": [
             {
                 "key": "FFmpegExtractAudio",
@@ -85,6 +86,7 @@ def get_ydl_opts_mp4(output_path, quality):
     return {
         "format": fmt,
         "outtmpl": output_path,
+        "proxy": os.getenv("HTTP_PROXY", ""),
         "merge_output_format": "mp4",
         "quiet": True,
         "no_warnings": True,
