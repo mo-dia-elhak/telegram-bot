@@ -60,7 +60,13 @@ def get_ydl_opts_mp3(output_path):
     return {
         "format": "bestaudio/best",
         "outtmpl": output_path,
-        "proxy": os.getenv("HTTP_PROXY", ""),
+        "socket_timeout": 30,
+        "retries": 10,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["web_creator", "tv_embedded"],
+            }
+        },
         "postprocessors": [
             {
                 "key": "FFmpegExtractAudio",
@@ -86,7 +92,13 @@ def get_ydl_opts_mp4(output_path, quality):
     return {
         "format": fmt,
         "outtmpl": output_path,
-        "proxy": os.getenv("HTTP_PROXY", ""),
+        "socket_timeout": 30,
+        "retries": 10,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["web_creator", "tv_embedded"],
+            }
+        },
         "merge_output_format": "mp4",
         "quiet": True,
         "no_warnings": True,
@@ -281,5 +293,4 @@ def main():
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
-if __name__ == "__main__":
-    main()
+if __name__ =
