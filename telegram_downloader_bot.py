@@ -101,14 +101,13 @@ async def download_media(url, opts):
 
     filename = await loop.run_in_executor(None, _download)
     path = Path(filename)
+    search_dir = path.parent
 
-    if not path.exists():
-        for ext in (".mp3", ".mp4", ".webm", ".mkv", ".m4a"):
-            alt = path.with_suffix(ext)
-            if alt.exists():
-                return alt
-        raise FileNotFoundError(f"Downloaded file not found: {path}")
-    return path
+    all_files = [f for f in search_dir.iterdir() if f.is_file()]
+    if all_files:
+        return max(all_files, key=lambda f: f.stat().st_mtime)
+
+    raise FileNotFoundError(f"No downloaded file found in {search_dir}")
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -208,7 +207,15 @@ async def perform_download(query, context: ContextTypes.DEFAULT_TYPE):
             logger.error("Download error: %s", e)
             await context.bot.send_message(
                 chat_id,
-                f"❌ *Download failed.*\n\n`{e}`",
+                f"❌ *Download failed.*\n\nThe video may be private or geo-restricted.\n\n`{e}`",
+                parse_mode="Markdown",
+            )
+            return
+        except FileNotFoundError as e:
+            logger.error("File not found: %s", e)
+            await context.bot.send_message(
+                chat_id,
+                "❌ *Download failed.* Could not locate the downloaded file.",
                 parse_mode="Markdown",
             )
             return
@@ -222,8 +229,7 @@ async def perform_download(query, context: ContextTypes.DEFAULT_TYPE):
         if file_path.stat().st_size > MAX_FILE_SIZE_BYTES:
             await context.bot.send_message(
                 chat_id,
-                "⚠️ File exceeds Telegram's 50 MB limit.\nTry a lower quality.",
-                parse_mode="Markdown",
+                "⚠️ File exceeds Telegram's 50 MB limit.\nPlease try a lower quality.",
             )
             return
 
@@ -231,7 +237,10 @@ async def perform_download(query, context: ContextTypes.DEFAULT_TYPE):
             with open(file_path, "rb") as f:
                 if fmt == "mp3":
                     await context.bot.send_audio(
-                        chat_id, audio=f, filename=file_path.name, caption="🎵 Here's your MP3!"
+                        chat_id,
+                        audio=f,
+                        filename=file_path.name,
+                        caption="🎵 Here's your MP3!",
                     )
                 else:
                     await context.bot.send_video(
